@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-FibonacciHeap - Фибоначчиева куча.
+class FibonacciHeap - Фибоначчиева куча.
+class Vertex - Вершина графа.
+class Graph - Граф с вершинами и ребрами.
+class AlgorithmDijkstra - Реализация алгоритма Дейкстры.
 """
 
 
@@ -370,3 +373,35 @@ class FibonacciHeap:
         self._consolidate()
         node._extract()
         return node
+
+
+class Vertex:
+    """
+    Вершина графа.
+    """
+
+    def __init__(self):
+        pass
+
+
+class Graph:
+    """
+    Граф с вершинами и ребрами.
+    """
+    def __init__(self):
+        pass
+
+
+class AlgorithmDijkstra:
+    """
+    Реализация алгоритма Дейкстры.
+
+    Находит кратчайший путь от заданной вершины s до всех других вершин графа.
+    """
+
+    UNLABELED = 0
+    LABELED = 1
+    SCANNED = 2
+
+    def __init__(self):
+        pass
