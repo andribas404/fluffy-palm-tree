@@ -28,7 +28,7 @@ class FibonacciHeap:
             # Перемещались ли ранее потомки этого узла
             self.marked = False
 
-        def extract(self):
+        def _extract(self):
             """
             Удаление связей перед переносом узла.
             """
@@ -54,10 +54,10 @@ class FibonacciHeap:
         Время работы: O(1)
         """
         h2 = FibonacciHeap()
-        h2.set_min(node)
+        h2._set_min(node)
         self.meld(h2)
 
-    def set_min(self, node):
+    def _set_min(self, node):
         """
         Установка минимального узла.
 
@@ -73,9 +73,9 @@ class FibonacciHeap:
         """
         current = self.find_min()
         if not current:
-            self.set_min(node)
+            self._set_min(node)
         elif node and node.key < current.key:
-            self.set_min(node)
+            self._set_min(node)
 
     def find_min(self):
         """
@@ -105,7 +105,7 @@ class FibonacciHeap:
 
         # Исходная куча пуста
         if not node1:
-            self.set_min(node2)
+            self._set_min(node2)
             return
 
         # Поскольку список двусвязный кольцевой, то если есть левый узел,
@@ -154,7 +154,7 @@ class FibonacciHeap:
                 node1.left = node2
 
         # Если нужно, обновляем минимум
-        self.update_min(node2)
+        self._update_min(node2)
 
     def delete_min(self):
         """
@@ -169,17 +169,17 @@ class FibonacciHeap:
         if not root:
             raise ValueError('Куча пуста')
         # Удаляем из списка минимальный узел
-        self.unlink(root)
+        self._unlink(root)
         # Устанавливаем временно минимальный узел на левый
-        self.set_min(root.left)
+        self._set_min(root.left)
         # Создаем новую кучу из потомков root (у них прежний parent)
         h = FibonacciHeap(root.child)
         self.meld(h)
         self._consolidate()
-        root.extract()
+        root._extract()
         return root
 
-    def unlink(self, node):
+    def _unlink(self, node):
         """
         Извлечение узла из двухсвязного списка.
 
@@ -243,7 +243,7 @@ class FibonacciHeap:
             # обновляем с новым значением ранга получившееся дерево
             ranked[melded.rank] = melded
             # Обновляем минимальный узел
-            self.update_min(melded)
+            self._update_min(melded)
 
     def _link(self, node1, node2):
         """
@@ -260,8 +260,8 @@ class FibonacciHeap:
         # child      node2 - child
 
         # node2 извлекается из списка корней
-        self.unlink(node2)
-        node2.extract()
+        self._unlink(node2)
+        node2._extract()
         # убирается отметка
         node2.marked = False
         # и он становится потомком node1
@@ -302,13 +302,14 @@ class FibonacciHeap:
         node.key = node.key - delta
         if not node.parent:
             # Узел - корневой
-            self.update_min(node)
+            self._update_min(node)
             return
 
         parent = node.parent
         parent.rank -= 1
-        parent.child = self.unlink(node)
-        node.extract()
+        parent.child = self._unlink(node)
+        self._cascading_cut(parent)
+        node._extract()
         self.insert(node)
 
     def _cut(self, node):
@@ -323,8 +324,8 @@ class FibonacciHeap:
         if not parent:
             return
         parent.rank -= 1
-        parent.child = self.unlink(node)
-        node.extract()
+        parent.child = self._unlink(node)
+        node._extract()
         self.insert(node)
 
     def _cascading_cut(self, node):
@@ -358,14 +359,14 @@ class FibonacciHeap:
         parent = node.parent
         if not parent:
             # Узел - корневой
-            self.unlink(node)
+            self._unlink(node)
         else:
             parent.rank -= 1
-            parent.child = self.unlink(node)
+            parent.child = self._unlink(node)
             self._cascading_cut(parent)
 
         h = FibonacciHeap(node.child)
         self.meld(h)
         self._consolidate()
-        node.extract()
+        node._extract()
         return node
