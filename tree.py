@@ -1,20 +1,16 @@
 """
-FibonacciHeap - Фибоначчиева куча
+FibonacciHeap - Фибоначчиева куча.
 """
-
-from sys import maxsize
 
 
 class FibonacciHeap:
     """
-    Фибоначчиева куча
+    Фибоначчиева куча.
     """
-    # значение ключа, при котором элемент становится минимальным
-    MINUS_INF = -maxsize + 1
 
     class Node:
         def __init__(self, x, key):
-            # Содержимое узла
+            # Содержимое узла.
             self.x = x
             # Ключ
             self.key = key
@@ -26,30 +22,30 @@ class FibonacciHeap:
             self.right = None
             # Прямой потомок узла
             self.child = None
-            # Ранг узла = кол-во потомков
+            # Ранг узла = кол-во прямых потомков
             self.rank = 0
-            # Флаг отметки
+            # Перемещались ли ранее потомки этого узла
             self.marked = False
 
-        def unlink(self):
+        def extract(self):
             """
-            Удаление связей перед переносом узла
+            Удаление связей перед переносом узла.
             """
             self.parent = None
             self.left = None
             self.right = None
 
-    def __init__(self):
+    def __init__(self, node=None):
         """
         Создание новой фибоначчиевой кучи
 
         Время работы: O(1)
         """
-        self.min_node = None
+        self.min_node = node
 
     def insert(self, node):
         """
-        Вставка узла node
+        Вставка узла node в список корневых узлов.
 
         Время работы: O(1)
         """
@@ -59,7 +55,7 @@ class FibonacciHeap:
 
     def set_min(self, node):
         """
-        Установка указателя минимального узла
+        Установка минимального узла.
 
         Время работы: O(1)
         """
@@ -67,7 +63,7 @@ class FibonacciHeap:
 
     def update_min(self, node):
         """
-        Обновление минимального узла, если ключ меньше
+        Обновление минимального узла, если ключ меньше.
 
         Время работы: O(1)
         """
@@ -79,7 +75,7 @@ class FibonacciHeap:
 
     def find_min(self):
         """
-        Поиск минимального узла
+        Поиск минимального узла.
 
         Время работы: O(1)
         """
@@ -87,7 +83,7 @@ class FibonacciHeap:
 
     def meld(self, h):
         """
-        Объединение двух фибоначчиевых куч
+        Объединение двух фибоначчиевых куч.
 
         Время работы: O(1)
         """
@@ -110,6 +106,7 @@ class FibonacciHeap:
 
         # Поскольку список двусвязный кольцевой, то если есть левый узел,
         # то существует правый (равен левому или другому)
+        # Если в списке 1 элемент, то он не указывает сам на себя = None
         left1 = node1.left
         left2 = node2.left
 
@@ -158,39 +155,41 @@ class FibonacciHeap:
 
     def delete_min(self):
         """
-        Извлечение минимального узла
+        Извлечение минимального узла.
 
-        Амортизированное время работы: O(log n)
            x
          / | \
         c1 c2 c3
+        Амортизированное время работы: O(log n)
         """
         root = self.find_min()
+        if not root:
+            raise ValueError('Куча пуста')
         # Удаляем из списка минимальный узел
         self.unlink(root)
         # Устанавливаем временно минимальный узел на левый
         self.set_min(root.left)
-        child = root.child
-        while child:
-            prev = child
-            child = child.right
-            prev.unlink()
-            self.insert(prev)
+        # Создаем новую кучу из потомков root (у них прежний parent)
+        h = FibonacciHeap(root.child)
+        self.meld(h)
         self._consolidate()
+        root.extract()
         return root
 
     def unlink(self, node):
         """
-        Извлечение узла из двухсвязного списка
+        Извлечение узла из двухсвязного списка.
 
+        Возвращает любой из узлов, оставшихся в списке, либо None
         left - node - right = left - right
+        Время работы: O(1)
         """
         left = node.left
         right = node.right
 
         # В списке 1 элемент - удаляемый
         if not left:
-            return
+            return None
 
         if left == right:
             # В списке было 2 элемента
@@ -199,11 +198,14 @@ class FibonacciHeap:
             left.right = right
             right.left = left
 
+        return left
+
     def _consolidate(self):
         """
-        Уплотнение списка корней - склеивание деревьев с одинаковым рангом
+        Уплотнение списка корней - склеивание деревьев с одинаковым рангом.
 
-        Обновляет указатель на минимальный узел
+        Обновляет минимальный узел
+        и устанавливает parent=None для всех корневых узлов
         Время работы: O(log n)
         """
         # временный минимальный узел
@@ -214,13 +216,19 @@ class FibonacciHeap:
         # Словарь корневых узлов вида ранг -> узел
         ranked = dict()
         ranked[root.rank] = root
+        root.parent = None
         node = root.right
 
         while node and node != root:
+            node.parent = None
             melded = node
             while melded.rank in ranked:
                 # В списке корней есть дерево с таким же рангом. Склеиваем
-                melded = self._link(melded, ranked[melded.rank])
+                rank = melded.rank
+                melded = self._link(melded, ranked[rank])
+                # и удаляем из словаря прежний ранг
+                del ranked[rank]
+            # обновляем с новым значением ранга получившееся дерево
             ranked[melded.rank] = melded
             # Обновляем минимальный узел
             self.update_min(melded)
@@ -228,41 +236,125 @@ class FibonacciHeap:
 
     def _link(self, node1, node2):
         """
-        Склеивание двух корней
+        Склеивание двух корней.
 
         Корнем становится узел с меньшим ключом, второй - его потомком
+        Возвращает получившийся корень
+        Время работы: O(1)
+        """
+        if node1.key > node2.key:
+            node1, node2 = node2, node1
+        # node1      node1
+        #   |    ->    |
+        # child      node2 - child
+
+        # node2 извлекается из списка корней
+        self.unlink(node2)
+        node2.extract()
+        # убирается отметка
+        node2.marked = False
+        # и он становится потомком node1
+        node2.parent = node1
+        # Обновляем ранг получившегося дерева
+        node1.rank += 1
+
+        # Потомок первого корня
+        child = node1.child
+        if not child:
+            # Если нет потомков
+            node1.child = node2
+        else:
+            left = child.left
+            if not left:
+                # Один потомок
+                # child - node2
+                child.left = child.right = node2
+                node2.left = node2.right = child
+            else:
+                # left <-x child
+                #   |        |
+                #      node2
+                node2.left = left
+                node2.right = child
+                left.right = node2
+                child.left = node2
+
+        return node1
+
+    def decrease_key(self, node, delta):
+        """
+        Уменьшение ключа узла node на значение delta > 0.
+
+        Время работы: O(1)
+        """
+        assert delta >= 0
+        node.key = node.key - delta
+        if not node.parent:
+            # Узел - корневой
+            self.update_min(node)
+            return
+
+        parent = node.parent
+        parent.rank -= 1
+        parent.child = self.unlink(node)
+        node.extract()
+        self.insert(node)
+
+    def _cut(self, node):
+        """
+        Подрезка дерева - перенос node в список корней.
+
+        Время работы: O(1)
+        """
+        assert node is not None
+        # Узел уже корневой
+        parent = node.parent
+        if not parent:
+            return
+        parent.rank -= 1
+        parent.child = self.unlink(node)
+        node.extract()
+        self.insert(node)
+
+    def _cascading_cut(self, node):
+        """
+        Каскадная подрезка дерева.
+
+        Начиная от узла node, и пока предшествующий узел имеет отметку
+        о перемещении (marked = True), все они становятся корневыми.
+
         Время работы: O(log n)
         """
-        pass
+        parent = node
+        while parent:
+            if not parent.marked:
+                parent.marked = True
+                return
+            else:
+                node = parent
+                parent = node.parent
+                self._cut(node)
 
-    def decrease_key(self, node, key):
+    def delete(self, node):
         """
-        Уменьшение ключа узла node до значения key
-
-        Время работы: O(1)
-        """
-        pass
-
-    def _cut(self, x, y):
-        """
-        Подрезка дерева - перенос x из числа потомков y в список корней
-
-        Время работы: O(1)
-        """
-        pass
-
-    def _cascading_cut(self, y):
-        """
-        Подрезка дерева от узла y до его корня
-
-        Время работы: O(1)
-        """
-        pass
-
-    def delete(self, x):
-        """
-        Удаление узла x
+        Удаление узла node
 
         Амортизированное время работы: O(log n)
         """
-        pass
+        if node == self.find_min():
+            # Узел - минимальный
+            return self.delete_min()
+        parent = node.parent
+        if not parent:
+            # Узел - корневой
+            self.unlink(node)
+        else:
+            parent.rank -= 1
+            parent.child = self.unlink(node)
+            self._cascading_cut(parent)
+
+        h = FibonacciHeap(node.child)
+        # TODO: не обнуляется parent
+        self.meld(h)
+        node.extract()
+        return node
