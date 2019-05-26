@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 FibonacciHeap - Фибоначчиева куча.
 """
@@ -34,6 +35,9 @@ class FibonacciHeap:
             self.parent = None
             self.left = None
             self.right = None
+
+        def __repr__(self):
+            return 'Node(x={})'.format(self.x)
 
     def __init__(self, node=None):
         """
@@ -150,8 +154,7 @@ class FibonacciHeap:
                 node1.left = node2
 
         # Если нужно, обновляем минимум
-        if node2.key < node1.key:
-            self.set_min(node2)
+        self.update_min(node2)
 
     def delete_min(self):
         """
@@ -180,7 +183,7 @@ class FibonacciHeap:
         """
         Извлечение узла из двухсвязного списка.
 
-        Возвращает любой из узлов, оставшихся в списке, либо None
+        Возвращает левый узел из оставшихся в списке, либо None
         left - node - right = left - right
         Время работы: O(1)
         """
@@ -219,12 +222,21 @@ class FibonacciHeap:
         root.parent = None
         node = root.right
 
-        while node and node != root:
+        while node:
+            # У корня нет предков
             node.parent = None
+            # Текущий узел
             melded = node
+            # Следующий просматриваемый узел
+            node = node.right
+            if ranked.get(node.rank, None) == node:
+                # Мы там уже были, поэтому эта итерация последняя
+                node = None
+
             while melded.rank in ranked:
-                # В списке корней есть дерево с таким же рангом. Склеиваем
+                # В списке корней есть дерево с таким же рангом.
                 rank = melded.rank
+                # Склеиваем
                 melded = self._link(melded, ranked[rank])
                 # и удаляем из словаря прежний ранг
                 del ranked[rank]
@@ -232,7 +244,6 @@ class FibonacciHeap:
             ranked[melded.rank] = melded
             # Обновляем минимальный узел
             self.update_min(melded)
-            node = node.right
 
     def _link(self, node1, node2):
         """
@@ -244,8 +255,8 @@ class FibonacciHeap:
         """
         if node1.key > node2.key:
             node1, node2 = node2, node1
-        # node1      node1
-        #   |    ->    |
+        # node1              node1
+        #   |    ->            |
         # child      node2 - child
 
         # node2 извлекается из списка корней
@@ -354,7 +365,7 @@ class FibonacciHeap:
             self._cascading_cut(parent)
 
         h = FibonacciHeap(node.child)
-        # TODO: не обнуляется parent
         self.meld(h)
+        self._consolidate()
         node.extract()
         return node
