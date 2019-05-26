@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 class FibonacciHeap - Фибоначчиева куча.
-class Vertex - Вершина графа.
 class Graph - Граф с вершинами и ребрами.
 class AlgorithmDijkstra - Реализация алгоритма Дейкстры.
 """
@@ -68,7 +67,7 @@ class FibonacciHeap:
         """
         self.min_node = node
 
-    def update_min(self, node):
+    def _update_min(self, node):
         """
         Обновление минимального узла, если ключ меньше.
 
@@ -295,14 +294,14 @@ class FibonacciHeap:
 
         return node1
 
-    def decrease_key(self, node, delta):
+    def decrease_key(self, node, newkey):
         """
-        Уменьшение ключа узла node на значение delta > 0.
+        Уменьшение ключа узла node до значения newkey.
 
         Время работы: O(1)
         """
-        assert delta >= 0
-        node.key = node.key - delta
+        assert newkey < node.key
+        node.key = newkey
         self._update_min(node)
         if not node.parent:
             # Узел - корневой
@@ -375,33 +374,130 @@ class FibonacciHeap:
         return node
 
 
-class Vertex:
-    """
-    Вершина графа.
-    """
-
-    def __init__(self):
-        pass
-
-
 class Graph:
     """
     Граф с вершинами и ребрами.
     """
-    def __init__(self):
-        pass
+
+    class Vertex:
+        """
+        Вершина графа.
+        """
+
+        def __init__(self, x):
+            self.x = x
+            self.edges = []
+
+    def __init__(self, n, edges):
+        """
+        Инициализация графа.
+
+        Вершины пронумерованы от 1 до n
+        edges - список ребер в формате [(вершина1, вершина2, вес ребра),...]
+        Полагаем, что веса неотрицательные
+        """
+        # self.nodes[i] = Vertex(i+1)
+        self.nodes = [Graph.Vertex(x) for x in range(1, n+1)]
+
+        for v1, v2, weight in edges:
+            node1 = self.nodes[v1-1]
+            node2 = self.nodes[v2-1]
+
+            node1.edges.append((node2, weight))
+            node2.edges.append((node1, weight))
 
 
 class AlgorithmDijkstra:
     """
     Реализация алгоритма Дейкстры.
 
-    Находит кратчайший путь от заданной вершины s до всех других вершин графа.
+    Находит кратчайший путь от заданной вершины до всех других вершин графа.
     """
+    class Link:
+        """
+        Связывает вершину исходного графа,
+        соответствующий ей узел в очереди на просмотр,
+        текущее расстояние до нее,
+        а также предшествующую ей вершину в оптимальном маршруте
+        """
+        UNLABELED = 'unlabeled'
+        LABELED = 'labeled'
+        SCANNED = 'scanned'
 
-    UNLABELED = 0
-    LABELED = 1
-    SCANNED = 2
+        def __init__(self, v):
+            self.vertex = v
+            self.heap_node = None
+            self.distance = None
+            self.pred = None
+            self.label = AlgorithmDijkstra.Link.UNLABELED
 
     def __init__(self):
         pass
+
+    def solve(self, graph, start_ind):
+        """
+        Находит кратчайший путь от вершины с номером start_ind до всех других
+        вершин графа graph.
+        """
+        links = [AlgorithmDijkstra.Link(v) for v in graph.nodes]
+
+        heap = FibonacciHeap()
+
+        heap_node = FibonacciHeap.Node(start_ind, 0)
+        link_start = links[start_ind - 1]
+        link_start.distance = 0
+        link_start.heap_node = heap_node
+        link_start.label = AlgorithmDijkstra.Link.LABELED
+        heap.insert(heap_node)
+
+        while True:
+            try:
+                # Извлекаем из очереди вершину с минимальным расстоянием до нее
+                heap_node = heap.delete_min()
+                link = links[heap_node.x - 1]
+                link.label = AlgorithmDijkstra.Link.SCANNED
+                # Проход по всем вершинам, смежных с текущей
+                for vertex, weight in link.vertex.edges:
+                    # Суммарное расстояние до смежной
+                    distance = link.distance + weight
+                    # Индекс смежной вершины
+                    vertex_ind = vertex.x
+                    # Соответствующая запись в таблице связей
+                    link_next = links[vertex_ind - 1]
+
+                    if link_next.label == AlgorithmDijkstra.Link.SCANNED:
+                        continue
+
+                    if link_next.distance is None:
+                        # Если ранее в этой вершине не были то добавляем ее
+                        # в очередь на просмотр с ключом равным текущему
+                        # расстоянию и сохраняем связь
+                        heap_node = FibonacciHeap.Node(vertex_ind, distance)
+                        heap.insert(heap_node)
+                        link_next.heap_node = heap_node
+                        link_next.distance = distance
+                        link_next.pred = link.vertex.x
+                        link_next.label = AlgorithmDijkstra.Link.LABELED
+                    else:
+                        # Вершина уже находится в очереди на просмотр
+                        if distance < link_next.distance:
+                            # и расстояние через текущую вершину короче
+                            heap.decrease_key(link_next.heap_node, distance)
+                            link_next.distance = distance
+                            link_next.pred = link.vertex.x
+            except ValueError:
+                # Конец очереди
+                break
+
+        # Возвращаем список расстояний до вершин пропуская вершину s
+        # Всего (n-1) значение. Если вершина недостижима, расстояние = -1
+        distances = []
+        for link in links:
+            if link.vertex.x == start_ind:
+                continue
+            if link.distance is None:
+                distances.append(-1)
+            else:
+                distances.append(link.distance)
+
+        return distances
