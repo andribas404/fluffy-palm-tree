@@ -300,9 +300,9 @@ class FibonacciHeap:
         """
         assert delta >= 0
         node.key = node.key - delta
+        self._update_min(node)
         if not node.parent:
             # Узел - корневой
-            self._update_min(node)
             return
 
         parent = node.parent
@@ -319,9 +319,9 @@ class FibonacciHeap:
         Время работы: O(1)
         """
         assert node is not None
-        # Узел уже корневой
         parent = node.parent
         if not parent:
+            # Узел уже корневой
             return
         parent.rank -= 1
         parent.child = self._unlink(node)
