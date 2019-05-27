@@ -401,13 +401,27 @@ class Graph:
         """
         # self.nodes[i] = Vertex(i+1)
         self.nodes = [Graph.Vertex(x) for x in range(1, n+1)]
+        matrix = [[None]*(n+1) for _ in range(n+1)]
 
         for v1, v2, weight in edges:
-            node1 = self.nodes[v1-1]
-            node2 = self.nodes[v2-1]
+            if v1 > v2:
+                v1, v2 = v2, v1
+            if v1 == v2:
+                continue
+            w = matrix[v1][v2]
+            if w is None or w > weight:
+                matrix[v1][v2] = weight
 
-            node1.edges.append((node2, weight))
-            node2.edges.append((node1, weight))
+        for v1 in range(1, n+1):
+            for v2 in range(v1+1, n+1):
+                node1 = self.nodes[v1-1]
+                node2 = self.nodes[v2-1]
+                weight = matrix[v1][v2]
+                if weight is None:
+                    continue
+
+                node1.edges.append((node2, weight))
+                node2.edges.append((node1, weight))
 
 
 class AlgorithmDijkstra:
