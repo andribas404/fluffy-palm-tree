@@ -76,7 +76,7 @@ class FibonacciHeap:
         current = self.find_min()
         if not current:
             self._set_min(node)
-        elif node and node.key < current.key:
+        elif node and node.key <= current.key:
             self._set_min(node)
 
     def find_min(self):
