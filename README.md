@@ -1,4 +1,4 @@
-# Имплементация алгоритма Дейкстры с использованием Фибоначчиевых куч для компании Bell Integrator
+# Имплементация алгоритма Дейкстры с использованием Фибоначчиевых куч
 
 ## Постановка задачи:
 
@@ -10,6 +10,16 @@
 3. Граф неориентированный - матрица смежности симметрична
 4. Посчитаем оптимальный путь алгоритмом Дейкстры
 
+## Пример использования:
+
+```python
+from tree import Graph, AlgorithmDijkstra
+
+graph = Graph(n, edges)
+algo = AlgorithmDijkstra()
+distances = algo.solve(graph, s)
+```
+
 ## Использованная литература
 
 > Michael L. Fredman and Robert Endre Tarjan. 1987. Fibonacci heaps and their uses in improved network optimization algorithms. J. ACM 34, 3 (July 1987), 596-615. DOI: https://doi.org/10.1145/28869.28874
@@ -20,14 +30,6 @@
 > ROBERT ENDRE TARJAN
 > AT&T Bell Laboratories, Murray Hill, New Jersey
 
-## Пример использования:
-
-```
-from tree import Graph, AlgorithmDijkstra
-
-graph = Graph(n, edges)
-algo = AlgorithmDijkstra()
-distances = algo.solve(graph, s)
-```
+Сделано для компании Bell Integrator
 
 Лицензия MIT
