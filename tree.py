@@ -170,15 +170,16 @@ class FibonacciHeap:
         root = self.find_min()
         if not root:
             raise ValueError('Куча пуста')
-        # Удаляем из списка минимальный узел
-        self._unlink(root)
         # Устанавливаем временно минимальный узел на левый
         self._set_min(root.left)
+        # Удаляем из списка минимальный узел
+        self._unlink(root)
         # Создаем новую кучу из потомков root (у них прежний parent)
         h = FibonacciHeap(root.child)
         self.meld(h)
         self._consolidate()
         root._extract()
+        root.child = None
         return root
 
     def _unlink(self, node):
@@ -302,9 +303,10 @@ class FibonacciHeap:
         """
         assert newkey < node.key
         node.key = newkey
-        self._update_min(node)
+
         if not node.parent:
             # Узел - корневой
+            self._update_min(node)
             return
 
         parent = node.parent
@@ -371,6 +373,7 @@ class FibonacciHeap:
         self.meld(h)
         self._consolidate()
         node._extract()
+        node.child = None
         return node
 
 
